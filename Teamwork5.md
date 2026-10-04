@@ -11,9 +11,12 @@
 
 Functional requirements
 
-- Hotel Customers should be able to register with the system
 
-- Hotel Customers should be able to login to the system
+- Hotel Receptionist should be able to login to the system
+
+- Hotel receptionist should be able to view all reservations
+
+- Hotel receptionist should be able to update room availability
 
 - Hotel Customers should be able to search for the available rooms
 
@@ -41,7 +44,7 @@ Usability requirements
 
 - UI must handle complex requests without breaking user flow
 
-- If the user is not logged in, he/she shouldn’t be able to reserve a room
+
 
 Reliability and availability
 
@@ -53,7 +56,7 @@ Reliability and availability
 
 Security
 
-- Users most log in to access their account
+- Hotel Receptionist most log in to access their account
 
 - Customers must only see their own bookings
 
