@@ -341,3 +341,254 @@ Customer information shall be handled according to privacy and data protection r
 ### **2.8.3 Application Type**
 
 The project will be implemented as a web-based hotel reservation application.
+
+---
+
+# **3\. Logical Subsystems**
+
+The application can be divided into the following subsystems:
+
+## **3.1 User Interface**
+
+### **Purpose**
+
+The user interface supports interaction between users and the application.
+
+### **Inputs**
+
+- User actions
+- Login and registration information
+- Search criteria
+- Reservation information
+- Modification and cancellation requests
+
+### **Outputs**
+
+- Room information
+- Search results
+- Reservation information
+- Confirmation messages
+- Error messages
+- Notifications
+
+### **Functional Requirements**
+
+The User Interface should allow users to:
+
+- Register and log in
+- Search for rooms
+- View room information
+- Create reservations
+- View, modify, and cancel reservations
+- Access functions according to their role
+
+### **Non-Functional Requirements**
+
+The User Interface should:
+
+- Be easy to navigate
+- Provide clear feedback
+- Validate user input
+- Be responsive on different screen sizes
+- Display important information clearly
+
+---
+
+## **3.2 Authentication and Authorization**
+
+### **Purpose**
+
+This subsystem manages user identity, login, and access permissions.
+
+### **Inputs**
+
+- Registration information
+- Username/email
+- Password
+- Logout requests
+- User role information
+
+### **Outputs**
+
+- Authentication result
+- Login status
+- User permissions
+- Access granted or denied
+
+### **Functional Requirements**
+
+- Register users
+- Authenticate users
+- Log users out
+- Identify user roles
+- Control access
+
+### **Non-Functional Requirements**
+
+The subsystem should:
+
+- Protect user credentials
+- Prevent unauthorized access
+- Handle authentication failures safely
+
+---
+
+## **3.3 Room Management**
+
+### **Purpose**
+
+The Room Management subsystem manages hotel rooms, room information, prices, and availability.
+
+### **Inputs**
+
+- Room information
+- Room price changes
+- Availability changes
+- Room search criteria
+- Existing reservation information
+
+### **Outputs**
+
+- Available rooms
+- Room details
+- Updated room information
+- Updated availability
+
+### **Functional Requirements**
+
+- Store room information
+- Search for available rooms
+- Display room information
+- Manage room prices
+- Manage unavailable rooms
+- Take existing reservations into account when determining availability
+
+### **Non-Functional Requirements**
+
+The subsystem should:
+
+- Return search results quickly
+- Maintain accurate room info (details and availability)
+
+---
+
+## **3.4 Reservation Management**
+
+### **Purpose**
+
+The Reservation Management subsystem handles the creation and management of hotel reservations.
+
+### **Inputs**
+
+- Customer information
+- Selected room
+- Check-in and check-out dates
+- Number of guests
+- Reservation modification or cancellation requests
+
+### **Outputs**
+
+- New reservation
+- Reservation confirmation
+- Reservation number
+- Reservation status
+- Updated reservation
+- Cancellation result
+
+### **Functional Requirements**
+
+- Create reservations
+- Check room availability
+- Prevent overlapping reservations
+- View reservations
+- Modify reservations
+- Cancel reservations
+- Maintain reservation status
+- Generate a unique reservation number
+
+### **Non-Functional Requirements**
+
+The subsystem shall:
+
+- Maintain reservation consistency
+- Prevent overlapping bookings by different users
+- Store reservations reliably
+- Handle failed operations safely
+
+---
+
+## **3.5 Notification Management**
+
+### **Purpose**
+
+The Notification Management subsystem handles notifications based on reservation or user events.
+
+### **Inputs**
+
+- Successful reservation
+- Reservation modification
+- Reservation cancellation
+- Other relevant system events
+
+### **Outputs**
+
+- Booking confirmation
+- Reservation update notification
+- Cancellation notification
+
+### **Functional Requirements**
+
+The subsystem should:
+
+- Generate relevant notifications.
+- Send notifications through supported notification services or as pop-ups.
+
+### **Non-Functional Requirements**
+
+The subsystem should:
+
+- Provide clear and accurate information
+- Handle notification service failures safely
+- Avoid sending incorrect reservation information
+
+---
+
+# **3.6 Administration and Reporting**
+
+### **Purpose**
+
+This subsystem provides hotel management with tools for managing the hotel and viewing relevant information.
+
+### **Inputs**
+
+- Room information
+- Price information
+- Availability changes
+- Reservation data
+- Reporting requests
+
+### **Outputs**
+
+- Updated room information
+- Updated prices
+- Availability information
+- Reservation statistics
+- Occupancy information
+- Revenue information
+
+### **Functional Requirements**
+
+The subsystem should allow authorized administrators to:
+
+- Manage rooms
+- Manage prices
+- Manage availability
+- View reservations
+- View relevant hotel statistics
+
+### **Non-Functional Requirements**
+
+The subsystem should:
+
+- Restrict administrative functions to authorized users only
+- Present statistics clearly and provide accurate information
