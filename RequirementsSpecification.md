@@ -379,7 +379,7 @@ The User Interface should allow users to:
 - Search for rooms
 - View room information
 - Create reservations
-- View, modify, and cancel reservations
+- View, modify and cancel reservations
 - Access functions according to their role
 
 ### **Non-Functional Requirements**
@@ -398,7 +398,7 @@ The User Interface should:
 
 ### **Purpose**
 
-This subsystem manages user identity, login, and access permissions.
+This subsystem manages user identity, login and access permissions.
 
 ### **Inputs**
 
@@ -437,7 +437,7 @@ The subsystem should:
 
 ### **Purpose**
 
-The Room Management subsystem manages hotel rooms, room information, prices, and availability.
+The Room Management subsystem manages hotel rooms, room information, prices and availability.
 
 ### **Inputs**
 
@@ -592,3 +592,43 @@ The subsystem should:
 
 - Restrict administrative functions to authorized users only
 - Present statistics clearly and provide accurate information
+
+---
+
+# **4\. Customer Requirements and QFD**
+
+## **4.1 Normal Requirements**
+
+- Customers can search for available rooms
+- Customers can view room information
+- Customers can see room prices
+- Customers can create an account
+- Customers can log in
+- Customers can make reservations
+- Customers can view their reservations
+- Customers can modify their reservations
+- Customers can cancel their reservations
+- Customers receive a reservation confirmation
+- Receptionists can view and manage reservations
+- Administrators can manage room information
+- Administrators can manage room prices
+- Administrators can manage room availability
+- The application works on mobile devices
+
+## **4.2 Expected Requirements**
+
+- Customer information is securely handled
+- Customers cannot access another customer's reservations
+- Only authorized staff can access administrative functions
+- Room availability is accurate
+- The application avoids double booking.
+- A reservation is immediately reflected in room availability
+- Prices and booking information are accurate
+- The application provides clear error messages
+- Reservations are not lost after the application is restarted
+- The application responds within a reasonable amount of time
+
+## **4.3 Exciting Requirements**
+
+- Real time chat with the hotel receptionist
+- Reservation reminders
