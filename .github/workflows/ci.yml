@@ -1,0 +1,45 @@
+
+name: Hotel Reservation CI
+
+on:
+  push:
+    branches:
+      - dev
+      - "feature/**"
+    paths:
+      - "Hotel-Reservation-App/**"
+      - ".github/workflows/ci.yml"
+
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - "Hotel-Reservation-App/**"
+      - ".github/workflows/ci.yml"
+
+jobs:
+  build:
+    name: Build Frontend and Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build frontend
+        working-directory: Hotel-Reservation-App/frontend
+        run: |
+          npm ci
+          npm run lint
+          npm run build
+
+      - name: Build backend
+        working-directory: Hotel-Reservation-App/backend
+        run: |
+          npm ci
+          npm run build
