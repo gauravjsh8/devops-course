@@ -1,9 +1,9 @@
-
 name: Hotel Reservation CI
 
 on:
   push:
     branches:
+      - main
       - dev
       - "feature/**"
     paths:
@@ -12,6 +12,7 @@ on:
 
   pull_request:
     branches:
+      - main
       - dev
     paths:
       - "Hotel-Reservation-App/**"
