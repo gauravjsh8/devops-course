@@ -6,7 +6,9 @@
   "type":"module",
  "scripts": {
   "dev": "tsx watch src/server.ts",
+  "test": "tsx --test test/*.test.ts",
   "build": "tsc",
+  "typecheck": "tsc --project tsconfig.test.json",
   "start": "node dist/server.js"
 },
   "keywords": [],
