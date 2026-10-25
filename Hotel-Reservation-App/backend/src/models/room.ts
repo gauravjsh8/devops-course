@@ -3,11 +3,14 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IRoom extends Document {
   roomNumber: string;
   roomType: "single" | "double" | "twin" | "suite" | "family";
+  beds: number;
   description: string;
-  capacity: number;
+  maxGuests: number;
   pricePerNight: number;
   status: "available" | "occupied" | "maintenance";
-  amenities: string[];
+  isActive: boolean;
+  facilities: string[];
+  photos: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,16 +30,30 @@ const roomSchema = new Schema<IRoom>(
       required: true,
     },
 
+    beds: {
+      type: Number,
+      required: true,
+      min: 1,
+      validate: {
+        validator: Number.isInteger,
+        message: "Beds must be a whole number",
+      },
+    },
+
     description: {
       type: String,
       required: true,
       trim: true,
     },
 
-    capacity: {
+    maxGuests: {
       type: Number,
       required: true,
       min: 1,
+      validate: {
+        validator: Number.isInteger,
+        message: "Maximum guests must be a whole number",
+      },
     },
 
     pricePerNight: {
@@ -51,7 +68,17 @@ const roomSchema = new Schema<IRoom>(
       default: "available",
     },
 
-    amenities: {
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+
+    facilities: {
+      type: [String],
+      default: [],
+    },
+
+    photos: {
       type: [String],
       default: [],
     },
