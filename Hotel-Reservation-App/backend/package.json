@@ -7,8 +7,8 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "test": "tsx --test test/*.test.ts",
-"build": "tsup src/server.ts --format esm --platform node --target node22 --out-dir dist --clean",   
- "typecheck": "tsc --project tsconfig.test.json",
+    "build": "tsc",
+    "typecheck": "tsc --project tsconfig.test.json",
     "start": "node dist/server.js"
   },
   "keywords": [],

@@ -5,10 +5,13 @@ export interface IUser extends Document {
   name: string;
   email: string;
   passwordHash: string;
-  role: "user" | "receptionist" | "admin";
+  role: UserRole;
+  authTokenVersion: number;
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type UserRole = "customer" | "receptionist" | "administrator";
 
 const userSchema = new Schema<IUser>(
   {
@@ -34,8 +37,14 @@ const userSchema = new Schema<IUser>(
 
     role: {
       type: String,
-      enum: ["user", "receptionist", "admin"],
-      default: "user",
+      enum: ["customer", "receptionist", "administrator"],
+      default: "customer",
+    },
+
+    authTokenVersion: {
+      type: Number,
+      default: 0,
+      select: false,
     },
   },
   {

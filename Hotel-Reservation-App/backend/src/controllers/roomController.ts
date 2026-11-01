@@ -1,27 +1,51 @@
-import { Request, Response } from "express";
-import Room from "../models/room";
+import type { Request, Response } from "express";
 import mongoose from "mongoose";
+import Room from "../models/room";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function sendRoomError(
+  error: unknown,
+  res: Response,
+  action: string,
+): void {
+  if (
+    error instanceof mongoose.Error.ValidationError ||
+    error instanceof mongoose.Error.CastError
+  ) {
+    res.status(400).json({ message: error.message });
+    return;
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === 11000
+  ) {
+    res.status(409).json({ message: "Room number already exists" });
+    return;
+  }
+
+  console.error(`${action} error:`, error);
+  res.status(500).json({ message: `An error occurred while ${action}` });
+}
 
 export async function createRoom(req: Request, res: Response): Promise<void> {
   try {
-    const {
-      roomNumber,
-      roomType,
-      beds,
-      description,
-      maxGuests,
-      pricePerNight,
-      facilities,
-      photos,
-    } = req.body;
-
+    const body = req.body;
     if (
-      !roomNumber ||
-      !roomType ||
-      beds == null ||
-      !description ||
-      maxGuests == null ||
-      pricePerNight == null
+      !isRecord(body) ||
+      typeof body.roomNumber !== "string" ||
+      !body.roomNumber.trim() ||
+      typeof body.description !== "string" ||
+      !body.description.trim() ||
+      body.roomType === undefined ||
+      body.beds === undefined ||
+      body.maxGuests === undefined ||
+      body.pricePerNight === undefined
     ) {
       res.status(400).json({
         message: "Please provide all required room details",
@@ -29,143 +53,127 @@ export async function createRoom(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    const existingRoom = await Room.findOne({
-      roomNumber: roomNumber.trim(),
-    });
-
-    if (existingRoom) {
-      res.status(409).json({
-        message: "Room number already exists",
-      });
-      return;
-    }
-
-    const room = await Room.create({
-      roomNumber,
-      roomType,
-      beds,
-      description,
-      maxGuests,
-      pricePerNight,
-      facilities,
-      photos,
-    });
+    const room = new Room();
+    room.set("roomNumber", body.roomNumber.trim());
+    room.set("roomType", body.roomType);
+    room.set("beds", body.beds);
+    room.set("description", body.description.trim());
+    room.set("maxGuests", body.maxGuests);
+    room.set("pricePerNight", body.pricePerNight);
+    room.set("facilities", body.facilities);
+    room.set("photos", body.photos);
+    await room.save();
 
     res.status(201).json({
       message: "Room created successfully",
       room,
     });
   } catch (error) {
-    console.error("Create room error:", error);
-
-    res.status(500).json({
-      message: "An error occurred while creating the room",
-    });
+    sendRoomError(error, res, "creating the room");
   }
 }
 
-export async function getAllRooms(req: Request, res: Response): Promise<void> {
+export async function getAllRooms(_req: Request, res: Response): Promise<void> {
   try {
     const rooms = await Room.find().sort({ roomNumber: 1 });
-
-    res.status(200).json({
-      count: rooms.length,
-      rooms,
-    });
+    res.status(200).json({ count: rooms.length, rooms });
   } catch (error) {
-    console.error("Get rooms error:", error);
-
-    res.status(500).json({
-      message: "An error occurred while retrieving rooms",
-    });
+    sendRoomError(error, res, "retrieving rooms");
   }
 }
 
 export async function getRoomById(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
-
     if (!mongoose.isValidObjectId(id)) {
-      res.status(400).json({
-        message: "Invalid room ID",
-      });
+      res.status(400).json({ message: "Invalid room ID" });
       return;
     }
 
     const room = await Room.findById(id);
-
     if (!room) {
-      res.status(404).json({
-        message: "Room not found",
-      });
+      res.status(404).json({ message: "Room not found" });
       return;
     }
 
     res.status(200).json({ room });
   } catch (error) {
-    console.error("Get room error:", error);
-
-    res.status(500).json({
-      message: "An error occurred while retrieving the room",
-    });
+    sendRoomError(error, res, "retrieving the room");
   }
 }
 
 export async function updateRoom(req: Request, res: Response): Promise<void> {
   try {
     const { id } = req.params;
-
     if (!mongoose.isValidObjectId(id)) {
-      res.status(400).json({
-        message: "Invalid room ID",
-      });
+      res.status(400).json({ message: "Invalid room ID" });
       return;
     }
 
     const room = await Room.findById(id);
-
     if (!room) {
-      res.status(404).json({
-        message: "Room not found",
-      });
+      res.status(404).json({ message: "Room not found" });
       return;
     }
 
-    const {
-      roomNumber,
-      roomType,
-      beds,
-      description,
-      maxGuests,
-      pricePerNight,
-      status,
-      isActive,
-      facilities,
-      photos,
-    } = req.body;
+    if (!isRecord(req.body)) {
+      res.status(400).json({ message: "A room update object is required" });
+      return;
+    }
 
-    if (roomNumber) room.roomNumber = roomNumber;
-    if (roomType) room.roomType = roomType;
-    if (beds) room.beds = beds;
-    if (description) room.description = description;
-    if (maxGuests) room.maxGuests = maxGuests;
-    if (pricePerNight) room.pricePerNight = pricePerNight;
-    if (status) room.status = status;
-    if (isActive !== undefined) room.isActive = isActive;
-    if (facilities) room.facilities = facilities;
-    if (photos) room.photos = photos;
+    const body = req.body;
+    const fields = [
+      "roomNumber",
+      "roomType",
+      "beds",
+      "description",
+      "maxGuests",
+      "pricePerNight",
+      "status",
+      "isActive",
+      "facilities",
+      "photos",
+    ] as const;
+    const hasUpdates = fields.some((field) => body[field] !== undefined);
+    if (!hasUpdates) {
+      res.status(400).json({ message: "At least one room field is required" });
+      return;
+    }
+
+    for (const field of fields) {
+      if (body[field] !== undefined) {
+        room.set(field, body[field]);
+      }
+    }
 
     await room.save();
-
-    res.status(200).json({
-      message: "Room updated successfully",
-      room,
-    });
+    res.status(200).json({ message: "Room updated successfully", room });
   } catch (error) {
-    console.error("Update room error:", error);
+    sendRoomError(error, res, "updating the room");
+  }
+}
 
-    res.status(500).json({
-      message: "An error occurred while updating the room",
-    });
+export async function deactivateRoom(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  try {
+    const { id } = req.params;
+    if (!mongoose.isValidObjectId(id)) {
+      res.status(400).json({ message: "Invalid room ID" });
+      return;
+    }
+
+    const room = await Room.findById(id);
+    if (!room) {
+      res.status(404).json({ message: "Room not found" });
+      return;
+    }
+
+    room.isActive = false;
+    await room.save();
+    res.status(200).json({ message: "Room archived successfully", room });
+  } catch (error) {
+    sendRoomError(error, res, "archiving the room");
   }
 }
