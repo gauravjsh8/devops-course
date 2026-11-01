@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import bcrypt from "bcryptjs";
 import { after, before, beforeEach, test } from "node:test";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import { connectDatabase, disconnectDatabase } from "../src/config/db.js";
-import { register, login } from "../src/controllers/authController.js";
-import User from "../src/models/user.js";
+import { connectDatabase, disconnectDatabase } from "../src/config/db";
+import { register, login } from "../src/controllers/authController";
+import User from "../src/models/user";
 
 let mongoServer: MongoMemoryServer;
 

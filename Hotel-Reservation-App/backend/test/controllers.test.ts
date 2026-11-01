@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { after, before, beforeEach, test } from "node:test";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
-import { connectDatabase, disconnectDatabase } from "../src/config/db.js";
+import { connectDatabase, disconnectDatabase } from "../src/config/db";
 import {
   createRoom,
   getAllRooms,
