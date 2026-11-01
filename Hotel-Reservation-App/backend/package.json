@@ -3,14 +3,14 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "type":"module",
- "scripts": {
-  "dev": "tsx watch src/server.ts",
-  "test": "tsx --test test/*.test.ts",
-  "build": "tsc",
-  "typecheck": "tsc --project tsconfig.test.json",
-  "start": "node dist/server.js"
-},
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "test": "tsx --test test/*.test.ts",
+"build": "tsup src/server.ts --format esm --platform node --target node22 --out-dir dist --clean",   
+ "typecheck": "tsc --project tsconfig.test.json",
+    "start": "node dist/server.js"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -28,7 +28,8 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.5",
-    "mongodb-memory-server": "^10.2.3",
+    "mongodb-memory-server": "^10.4.3",
+    "tsup": "^9.0.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   }
