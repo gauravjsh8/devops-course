@@ -58,7 +58,9 @@ test("UserModel stores a password hash and hides it from default queries", async
   assert.equal(loadedUser.email, "taylor@example.com");
   assert.equal(loadedUser.passwordHash, undefined);
 
-  const userWithPassword = await User.findById(user._id).select("+passwordHash");
+  const userWithPassword = await User.findById(user._id).select(
+    "+passwordHash",
+  );
   assert.ok(userWithPassword);
   assert.notEqual(
     userWithPassword.passwordHash,
