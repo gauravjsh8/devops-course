@@ -7,6 +7,7 @@ export interface IReservation extends Document {
   checkIn: Date;
   checkOut: Date;
   guestCount: number;
+  totalPrice: number;
   reservationNumber: string;
   status: "confirmed" | "cancelled";
   createdAt: Date;
@@ -45,6 +46,10 @@ const reservationSchema = new Schema<IReservation>(
         validator: Number.isInteger,
         message: "Guest count must be a whole number",
       },
+    },
+    totalPrice: {
+      type: Number,
+      default: 0,
     },
 
     reservationNumber: {
