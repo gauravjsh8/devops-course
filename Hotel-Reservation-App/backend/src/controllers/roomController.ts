@@ -6,11 +6,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function sendRoomError(
-  error: unknown,
-  res: Response,
-  action: string,
-): void {
+function sendRoomError(error: unknown, res: Response, action: string): void {
   if (
     error instanceof mongoose.Error.ValidationError ||
     error instanceof mongoose.Error.CastError
@@ -75,7 +71,7 @@ export async function createRoom(req: Request, res: Response): Promise<void> {
 
 export async function getAllRooms(_req: Request, res: Response): Promise<void> {
   try {
-    const rooms = await Room.find().sort({ roomNumber: 1 });
+    const rooms = await Room.find({ isActive: true }).sort({ roomNumber: 1 });
     res.status(200).json({ count: rooms.length, rooms });
   } catch (error) {
     sendRoomError(error, res, "retrieving rooms");
@@ -91,7 +87,7 @@ export async function getRoomById(req: Request, res: Response): Promise<void> {
     }
 
     const room = await Room.findById(id);
-    if (!room) {
+    if (!room || !room.isActive) {
       res.status(404).json({ message: "Room not found" });
       return;
     }

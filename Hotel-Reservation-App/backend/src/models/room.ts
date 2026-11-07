@@ -13,7 +13,6 @@ export interface IRoom extends Document {
   photos: string[];
   createdAt: Date;
   updatedAt: Date;
-  result: string;
 }
 
 const roomSchema = new Schema<IRoom>(
@@ -83,7 +82,6 @@ const roomSchema = new Schema<IRoom>(
       type: [String],
       default: [],
     },
-    result: String,
   },
   {
     timestamps: true,

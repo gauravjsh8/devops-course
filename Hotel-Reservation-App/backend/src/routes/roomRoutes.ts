@@ -7,27 +7,19 @@ import {
   updateRoom,
 } from "../controllers/roomController";
 import { requireAuth, requireRole } from "../services/authService";
+import { searchAvailableRooms } from "../controllers/reservationController";
 
 const router = Router();
 
-router.post(
-  "/",
-  requireAuth,
-  requireRole("receptionist", "administrator"),
-  createRoom,
-);
+router.post("/", requireAuth, requireRole("administrator"), createRoom);
 router.get("/", getAllRooms);
+router.get("/available", searchAvailableRooms);
 router.get("/:id", getRoomById);
-router.put(
-  "/:id",
-  requireAuth,
-  requireRole("receptionist", "administrator"),
-  updateRoom,
-);
+router.put("/:id", requireAuth, requireRole("administrator"), updateRoom);
 router.delete(
   "/:id",
   requireAuth,
-  requireRole("receptionist", "administrator"),
+  requireRole("administrator"),
   deactivateRoom,
 );
 
