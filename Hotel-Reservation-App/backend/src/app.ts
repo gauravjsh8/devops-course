@@ -2,6 +2,8 @@ import cors from "cors";
 import express from "express";
 import authRoutes from "./routes/authRoutes";
 import roomRoutes from "./routes/roomRoutes";
+import reservationRoutes from "./routes/reservationRoutes";
+import adminRoomRoutes from "./routes/adminRoomRoutes";
 export function createApp() {
   const app = express();
 
@@ -9,6 +11,8 @@ export function createApp() {
   app.use(express.json());
   app.use("/api/auth", authRoutes);
   app.use("/api/rooms", roomRoutes);
+  app.use("/api/admin/rooms", adminRoomRoutes);
+  app.use("/api/reservations", reservationRoutes);
 
   app.get("/", (_req, res) => {
     res.send("Welcome to the Hotel Reservation API");

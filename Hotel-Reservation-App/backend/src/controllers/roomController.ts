@@ -6,11 +6,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function sendRoomError(
-  error: unknown,
-  res: Response,
-  action: string,
-): void {
+function sendRoomError(error: unknown, res: Response, action: string): void {
   if (
     error instanceof mongoose.Error.ValidationError ||
     error instanceof mongoose.Error.CastError
@@ -75,7 +71,7 @@ export async function createRoom(req: Request, res: Response): Promise<void> {
 
 export async function getAllRooms(_req: Request, res: Response): Promise<void> {
   try {
-    const rooms = await Room.find().sort({ roomNumber: 1 });
+    const rooms = await Room.find({ isActive: true }).sort({ roomNumber: 1 });
     res.status(200).json({ count: rooms.length, rooms });
   } catch (error) {
     sendRoomError(error, res, "retrieving rooms");
@@ -91,7 +87,7 @@ export async function getRoomById(req: Request, res: Response): Promise<void> {
     }
 
     const room = await Room.findById(id);
-    if (!room) {
+    if (!room || !room.isActive) {
       res.status(404).json({ message: "Room not found" });
       return;
     }
@@ -175,5 +171,66 @@ export async function deactivateRoom(
     res.status(200).json({ message: "Room archived successfully", room });
   } catch (error) {
     sendRoomError(error, res, "archiving the room");
+  }
+}
+
+export async function updateRoomPrice(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    res.status(400).json({ message: "Invalid room ID" });
+    return;
+  }
+  if (
+    !isRecord(req.body) ||
+    typeof req.body.pricePerNight !== "number" ||
+    !Number.isFinite(req.body.pricePerNight) ||
+    req.body.pricePerNight < 0
+  ) {
+    res.status(400).json({ message: "A non-negative room price is required" });
+    return;
+  }
+
+  try {
+    const room = await Room.findById(id);
+    if (!room) {
+      res.status(404).json({ message: "Room not found" });
+      return;
+    }
+    room.pricePerNight = req.body.pricePerNight;
+    await room.save();
+    res.status(200).json({ message: "Room price updated", room });
+  } catch (error) {
+    sendRoomError(error, res, "updating the room price");
+  }
+}
+
+export async function setRoomUnavailable(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    res.status(400).json({ message: "Invalid room ID" });
+    return;
+  }
+  if (!isRecord(req.body) || typeof req.body.unavailable !== "boolean") {
+    res.status(400).json({ message: "The unavailable flag must be a boolean" });
+    return;
+  }
+
+  try {
+    const room = await Room.findById(id);
+    if (!room) {
+      res.status(404).json({ message: "Room not found" });
+      return;
+    }
+    room.status = req.body.unavailable ? "maintenance" : "available";
+    await room.save();
+    res.status(200).json({ message: "Room availability updated", room });
+  } catch (error) {
+    sendRoomError(error, res, "updating room availability");
   }
 }
