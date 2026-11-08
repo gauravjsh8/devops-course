@@ -26,13 +26,13 @@ function handleError(error: unknown, res: Response): void {
   res.status(500).json({ message: "Something went wrong" });
 }
 
-// GET /api/rooms/available?checkIn=2027-01-10&checkOut=2027-01-12&guests=2
+// GET /api/rooms/search?checkIn=2027-01-10&checkOut=2027-01-12&guests=2
 export async function searchAvailableRooms(req: Request, res: Response) {
   try {
     const rooms = await reservationService.searchAvailableRooms(
       String(req.query.checkIn),
       String(req.query.checkOut),
-      Number(req.query.guests ?? 1),
+      Number(req.query.guests),
     );
     res.json({ count: rooms.length, rooms });
   } catch (error) {
@@ -66,9 +66,9 @@ export async function getMyReservations(_req: Request, res: Response) {
 }
 
 // GET /api/reservations
-export async function getAllReservations(_req: Request, res: Response) {
+export async function getReservations(_req: Request, res: Response) {
   try {
-    const reservations = await reservationService.getAllReservations();
+    const reservations = await reservationService.getReservations(getUser(res));
     res.json({ count: reservations.length, reservations });
   } catch (error) {
     handleError(error, res);

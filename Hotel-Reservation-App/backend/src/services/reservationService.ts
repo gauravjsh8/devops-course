@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Reservation from "../models/reservation";
 import Room from "../models/room";
+import User from "../models/user";
 
 // Error with an HTTP status code, same idea as AuthServiceError
 export class ReservationError extends Error {
@@ -19,6 +20,7 @@ export interface CurrentUser {
 
 export interface ReservationInput {
   roomId?: string;
+  customerId?: string;
   checkIn?: string;
   checkOut?: string;
   guestCount?: number;
@@ -89,6 +91,10 @@ export async function searchAvailableRooms(
   checkOutText: string,
   guests: number,
 ) {
+  if (!Number.isInteger(guests) || guests < 1) {
+    throw new ReservationError("Guests must be a positive whole number", 400);
+  }
+
   const checkIn = new Date(checkInText);
   const checkOut = new Date(checkOutText);
   checkDates(checkIn, checkOut);
@@ -125,7 +131,12 @@ export async function createReservation(
   user: CurrentUser,
   data: ReservationInput,
 ) {
-  if (!data.roomId || !data.checkIn || !data.checkOut || !data.guestCount) {
+  if (
+    !data.roomId ||
+    !data.checkIn ||
+    !data.checkOut ||
+    data.guestCount === undefined
+  ) {
     throw new ReservationError(
       "roomId, checkIn, checkOut and guestCount are required",
       400,
@@ -136,32 +147,83 @@ export async function createReservation(
   const checkOut = new Date(data.checkOut);
   const guestCount = Number(data.guestCount);
   checkDates(checkIn, checkOut);
+  if (!Number.isInteger(guestCount) || guestCount < 1) {
+    throw new ReservationError("Guests must be a positive whole number", 400);
+  }
 
   if (!mongoose.isValidObjectId(data.roomId)) {
     throw new ReservationError("Invalid room ID", 400);
   }
 
-  const room = await Room.findById(data.roomId);
-  if (!room || !room.isActive || room.status !== "available") {
-    throw new ReservationError("Room is not available", 404);
-  }
-  if (guestCount > room.maxGuests) {
-    throw new ReservationError(
-      `This room allows at most ${room.maxGuests} guests`,
-      400,
-    );
-  }
-  if (await isRoomBooked(room.id, checkIn, checkOut)) {
-    throw new ReservationError("Room is already booked for these dates", 409);
+  let customerId = user.id;
+  if (user.role === "receptionist") {
+    if (!data.customerId || !mongoose.isValidObjectId(data.customerId)) {
+      throw new ReservationError("A valid customerId is required", 400);
+    }
+    const customer = await User.findOne({
+      _id: data.customerId,
+      role: "customer",
+    });
+    if (!customer) {
+      throw new ReservationError("Customer not found", 404);
+    }
+    customerId = customer.id;
   }
 
-  return Reservation.create({
-    customer: user.id,
-    room: room.id,
-    checkIn,
-    checkOut,
-    guestCount,
-    totalPrice: countNights(checkIn, checkOut) * room.pricePerNight,
+  return mongoose.connection.transaction(async (session) => {
+    const room = await Room.findById(data.roomId).session(session);
+    if (!room || !room.isActive || room.status !== "available") {
+      throw new ReservationError("Room is not available", 404);
+    }
+    if (guestCount > room.maxGuests) {
+      throw new ReservationError(
+        `This room allows at most ${room.maxGuests} guests`,
+        400,
+      );
+    }
+
+    // Temporarily change the room document so concurrent bookings conflict.
+    const guard = await Room.updateOne(
+      { _id: room._id, isActive: true, status: "available" },
+      { $set: { status: "occupied" } },
+      { session },
+    );
+    if (guard.modifiedCount !== 1) {
+      throw new ReservationError("Room is not available", 409);
+    }
+
+    const overlapping = await Reservation.findOne({
+      room: room._id,
+      status: "confirmed",
+      checkIn: { $lt: checkOut },
+      checkOut: { $gt: checkIn },
+    }).session(session);
+    if (overlapping) {
+      throw new ReservationError(
+        "Room is already booked for these dates",
+        409,
+      );
+    }
+
+    const [reservation] = await Reservation.create(
+      [
+        {
+          customer: customerId,
+          room: room.id,
+          checkIn,
+          checkOut,
+          guestCount,
+          totalPrice: countNights(checkIn, checkOut) * room.pricePerNight,
+        },
+      ],
+      { session },
+    );
+    await Room.updateOne(
+      { _id: room._id, status: "occupied" },
+      { $set: { status: "available" } },
+      { session },
+    );
+    return reservation;
   });
 }
 
@@ -178,6 +240,12 @@ export async function getAllReservations() {
     .populate("room")
     .populate("customer", "name email")
     .sort({ checkIn: 1 });
+}
+
+export async function getReservations(user: CurrentUser) {
+  return user.role === "customer"
+    ? getMyReservations(user)
+    : getAllReservations();
 }
 
 // ---------- shared (owner or staff) ----------
@@ -201,18 +269,27 @@ export async function updateReservation(
   }
 
   // Use new values if given, otherwise keep the old ones
-  const checkIn = data.checkIn ? new Date(data.checkIn) : reservation.checkIn;
-  const checkOut = data.checkOut
-    ? new Date(data.checkOut)
-    : reservation.checkOut;
-  const guestCount = data.guestCount
-    ? Number(data.guestCount)
-    : reservation.guestCount;
+  const checkIn =
+    data.checkIn === undefined ? reservation.checkIn : new Date(data.checkIn);
+  const checkOut =
+    data.checkOut === undefined
+      ? reservation.checkOut
+      : new Date(data.checkOut);
+  const guestCount =
+    data.guestCount === undefined
+      ? reservation.guestCount
+      : Number(data.guestCount);
   checkDates(checkIn, checkOut);
+  if (!Number.isInteger(guestCount) || guestCount < 1) {
+    throw new ReservationError("Guests must be a positive whole number", 400);
+  }
 
   const room = await Room.findById(reservation.room);
   if (!room) {
     throw new ReservationError("Room not found", 404);
+  }
+  if (!room.isActive || room.status !== "available") {
+    throw new ReservationError("Room is not available", 409);
   }
   if (guestCount > room.maxGuests) {
     throw new ReservationError(

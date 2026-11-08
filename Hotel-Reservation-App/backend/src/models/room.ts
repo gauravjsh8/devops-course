@@ -82,6 +82,7 @@ const roomSchema = new Schema<IRoom>(
       type: [String],
       default: [],
     },
+
   },
   {
     timestamps: true,

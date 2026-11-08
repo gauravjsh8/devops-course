@@ -173,3 +173,64 @@ export async function deactivateRoom(
     sendRoomError(error, res, "archiving the room");
   }
 }
+
+export async function updateRoomPrice(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    res.status(400).json({ message: "Invalid room ID" });
+    return;
+  }
+  if (
+    !isRecord(req.body) ||
+    typeof req.body.pricePerNight !== "number" ||
+    !Number.isFinite(req.body.pricePerNight) ||
+    req.body.pricePerNight < 0
+  ) {
+    res.status(400).json({ message: "A non-negative room price is required" });
+    return;
+  }
+
+  try {
+    const room = await Room.findById(id);
+    if (!room) {
+      res.status(404).json({ message: "Room not found" });
+      return;
+    }
+    room.pricePerNight = req.body.pricePerNight;
+    await room.save();
+    res.status(200).json({ message: "Room price updated", room });
+  } catch (error) {
+    sendRoomError(error, res, "updating the room price");
+  }
+}
+
+export async function setRoomUnavailable(
+  req: Request,
+  res: Response,
+): Promise<void> {
+  const { id } = req.params;
+  if (!mongoose.isValidObjectId(id)) {
+    res.status(400).json({ message: "Invalid room ID" });
+    return;
+  }
+  if (!isRecord(req.body) || typeof req.body.unavailable !== "boolean") {
+    res.status(400).json({ message: "The unavailable flag must be a boolean" });
+    return;
+  }
+
+  try {
+    const room = await Room.findById(id);
+    if (!room) {
+      res.status(404).json({ message: "Room not found" });
+      return;
+    }
+    room.status = req.body.unavailable ? "maintenance" : "available";
+    await room.save();
+    res.status(200).json({ message: "Room availability updated", room });
+  } catch (error) {
+    sendRoomError(error, res, "updating room availability");
+  }
+}

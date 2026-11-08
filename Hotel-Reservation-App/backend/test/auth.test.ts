@@ -223,6 +223,74 @@ test("adminCanCreateUpdateAndArchiveRooms", async () => {
   assert.ok(await Room.findById(roomId));
 });
 
+test("adminRoomRoutes allow administrators and reject other roles", async () => {
+  const admin = await staffToken("administrator");
+  const customer = (await registerCustomer()).token;
+  const receptionist = await staffToken("receptionist");
+
+  const deniedCustomer = await request("/api/admin/rooms", {
+    method: "POST",
+    body: roomPayload,
+    token: customer,
+  });
+  const deniedReceptionist = await request("/api/admin/rooms", {
+    method: "POST",
+    body: roomPayload,
+    token: receptionist,
+  });
+  assert.equal(deniedCustomer.response.status, 403);
+  assert.equal(deniedReceptionist.response.status, 403);
+
+  const created = await request("/api/admin/rooms", {
+    method: "POST",
+    body: roomPayload,
+    token: admin,
+  });
+  assert.equal(created.response.status, 201);
+  const roomId = created.data.room._id as string;
+
+  const updated = await request(`/api/admin/rooms/${roomId}`, {
+    method: "PATCH",
+    body: { description: "Updated room" },
+    token: admin,
+  });
+  const price = await request(`/api/admin/rooms/${roomId}/price`, {
+    method: "PATCH",
+    body: { pricePerNight: 150 },
+    token: admin,
+  });
+  const unavailable = await request(
+    `/api/admin/rooms/${roomId}/availability`,
+    {
+      method: "PATCH",
+      body: { unavailable: true },
+      token: admin,
+    },
+  );
+  assert.equal(updated.response.status, 200);
+  assert.equal(price.data.room.pricePerNight, 150);
+  assert.equal(unavailable.data.room.status, "maintenance");
+  assert.equal((await Room.findById(roomId))?.status, "maintenance");
+
+  const available = await request(
+    `/api/admin/rooms/${roomId}/availability`,
+    {
+      method: "PATCH",
+      body: { unavailable: false },
+      token: admin,
+    },
+  );
+  assert.equal(available.data.room.status, "available");
+
+  const deactivated = await request(`/api/admin/rooms/${roomId}/deactivate`, {
+    method: "POST",
+    token: admin,
+  });
+  assert.equal(deactivated.response.status, 200);
+  assert.equal(deactivated.data.room.isActive, false);
+  assert.equal((await request("/api/rooms")).data.count, 0);
+});
+
 test("roomRoutesRejectInvalidUpdatesAndDuplicateNumbers", async () => {
   const token = await staffToken("administrator");
   const firstRoom = await request("/api/rooms", {

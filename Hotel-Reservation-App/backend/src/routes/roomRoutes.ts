@@ -13,6 +13,7 @@ const router = Router();
 
 router.post("/", requireAuth, requireRole("administrator"), createRoom);
 router.get("/", getAllRooms);
+router.get("/search", searchAvailableRooms);
 router.get("/available", searchAvailableRooms);
 router.get("/:id", getRoomById);
 router.put("/:id", requireAuth, requireRole("administrator"), updateRoom);
