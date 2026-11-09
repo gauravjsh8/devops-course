@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "test": "tsx --test test/*.test.ts",
+    "test": "tsx --test test/*.test.ts test/admin/*.test.ts",
     "build": "tsc",
     "typecheck": "tsc --project tsconfig.test.json",
     "start": "node dist/server.js"
