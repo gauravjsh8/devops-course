@@ -75,7 +75,9 @@ async function registerCustomer(
   return { token: login.data.token, user: login.data.user };
 }
 
-async function staffToken(role: "receptionist" | "administrator"): Promise<string> {
+async function staffToken(
+  role: "receptionist" | "administrator",
+): Promise<string> {
   const email = `${role}@example.com`;
   await User.create({
     name: "Test Staff",
@@ -194,8 +196,8 @@ test("requireRole_rejectsUserWithoutRequiredRole", async () => {
   assert.equal(result.response.status, 403);
 });
 
-test("staffCanCreateUpdateAndArchiveRooms", async () => {
-  const token = await staffToken("receptionist");
+test("adminCanCreateUpdateAndArchiveRooms", async () => {
+  const token = await staffToken("administrator");
   const created = await request("/api/rooms", {
     method: "POST",
     body: roomPayload,
@@ -221,6 +223,74 @@ test("staffCanCreateUpdateAndArchiveRooms", async () => {
   assert.ok(await Room.findById(roomId));
 });
 
+test("adminRoomRoutes allow administrators and reject other roles", async () => {
+  const admin = await staffToken("administrator");
+  const customer = (await registerCustomer()).token;
+  const receptionist = await staffToken("receptionist");
+
+  const deniedCustomer = await request("/api/admin/rooms", {
+    method: "POST",
+    body: roomPayload,
+    token: customer,
+  });
+  const deniedReceptionist = await request("/api/admin/rooms", {
+    method: "POST",
+    body: roomPayload,
+    token: receptionist,
+  });
+  assert.equal(deniedCustomer.response.status, 403);
+  assert.equal(deniedReceptionist.response.status, 403);
+
+  const created = await request("/api/admin/rooms", {
+    method: "POST",
+    body: roomPayload,
+    token: admin,
+  });
+  assert.equal(created.response.status, 201);
+  const roomId = created.data.room._id as string;
+
+  const updated = await request(`/api/admin/rooms/${roomId}`, {
+    method: "PATCH",
+    body: { description: "Updated room" },
+    token: admin,
+  });
+  const price = await request(`/api/admin/rooms/${roomId}/price`, {
+    method: "PATCH",
+    body: { pricePerNight: 150 },
+    token: admin,
+  });
+  const unavailable = await request(
+    `/api/admin/rooms/${roomId}/availability`,
+    {
+      method: "PATCH",
+      body: { unavailable: true },
+      token: admin,
+    },
+  );
+  assert.equal(updated.response.status, 200);
+  assert.equal(price.data.room.pricePerNight, 150);
+  assert.equal(unavailable.data.room.status, "maintenance");
+  assert.equal((await Room.findById(roomId))?.status, "maintenance");
+
+  const available = await request(
+    `/api/admin/rooms/${roomId}/availability`,
+    {
+      method: "PATCH",
+      body: { unavailable: false },
+      token: admin,
+    },
+  );
+  assert.equal(available.data.room.status, "available");
+
+  const deactivated = await request(`/api/admin/rooms/${roomId}/deactivate`, {
+    method: "POST",
+    token: admin,
+  });
+  assert.equal(deactivated.response.status, 200);
+  assert.equal(deactivated.data.room.isActive, false);
+  assert.equal((await request("/api/rooms")).data.count, 0);
+});
+
 test("roomRoutesRejectInvalidUpdatesAndDuplicateNumbers", async () => {
   const token = await staffToken("administrator");
   const firstRoom = await request("/api/rooms", {
@@ -233,14 +303,11 @@ test("roomRoutesRejectInvalidUpdatesAndDuplicateNumbers", async () => {
     body: roomPayload,
     token,
   });
-  const invalidUpdate = await request(
-    `/api/rooms/${firstRoom.data.room._id}`,
-    {
-      method: "PUT",
-      body: { status: "not-a-status" },
-      token,
-    },
-  );
+  const invalidUpdate = await request(`/api/rooms/${firstRoom.data.room._id}`, {
+    method: "PUT",
+    body: { status: "not-a-status" },
+    token,
+  });
 
   assert.equal(firstRoom.response.status, 201);
   assert.equal(duplicate.response.status, 409);
@@ -263,4 +330,33 @@ test("requireAuth_rejectsMalformedAndLoggedOutTokens", async () => {
     token,
   });
   assert.equal(expiredSession.response.status, 401);
+});
+
+test("receptionistCannotManageRooms", async () => {
+  const token = await staffToken("receptionist");
+  const result = await request("/api/rooms", {
+    method: "POST",
+    body: roomPayload,
+    token,
+  });
+
+  assert.equal(result.response.status, 403);
+});
+
+test("archivedRooms_areHiddenFromPublic", async () => {
+  const token = await staffToken("administrator");
+  const created = await request("/api/rooms", {
+    method: "POST",
+    body: roomPayload,
+    token,
+  });
+  const roomId = created.data.room._id as string;
+
+  await request(`/api/rooms/${roomId}`, { method: "DELETE", token });
+
+  const list = await request("/api/rooms");
+  const detail = await request(`/api/rooms/${roomId}`);
+
+  assert.equal(list.data.count, 0);
+  assert.equal(detail.response.status, 404);
 });

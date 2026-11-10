@@ -22,7 +22,9 @@ export class AuthServiceError extends Error {
 function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
   if (!secret || secret.length < 32) {
-    throw new Error("JWT_SECRET must be configured with at least 32 characters");
+    throw new Error(
+      "JWT_SECRET must be configured with at least 32 characters",
+    );
   }
 
   return secret;
@@ -48,7 +50,10 @@ export async function registerCustomer(input: RegisterCustomerInput) {
 
   const email = normalizeEmail(input.email);
   if (typeof input.password !== "string" || input.password.length < 8) {
-    throw new AuthServiceError("Password must be at least 8 characters long", 400);
+    throw new AuthServiceError(
+      "Password must be at least 8 characters long",
+      400,
+    );
   }
 
   const existingUser = await User.findOne({ email });
@@ -115,10 +120,9 @@ export async function login(emailInput: unknown, passwordInput: unknown) {
 }
 
 export async function logout(userId: string): Promise<void> {
-  const user = await User.findByIdAndUpdate(
-    userId,
-    { $inc: { authTokenVersion: 1 } },
-  );
+  const user = await User.findByIdAndUpdate(userId, {
+    $inc: { authTokenVersion: 1 },
+  });
 
   if (!user) {
     throw new AuthServiceError("User not found", 401);
@@ -191,7 +195,9 @@ export function requireRole(...roles: UserRole[]): RequestHandler {
     }
 
     if (!user.role || !roles.includes(user.role)) {
-      res.status(403).json({ message: "You do not have permission to do this" });
+      res
+        .status(403)
+        .json({ message: "You do not have permission to do this" });
       return;
     }
 
