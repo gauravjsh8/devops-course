@@ -53,9 +53,7 @@ function HomePage() {
   return (
     <div className="space-y-12">
       <section className="rounded-2xl bg-gradient-to-br from-blue-700 to-blue-500 px-8 py-16 text-center text-white shadow-lg">
-        <h1 className="text-4xl font-bold md:text-5xl">
-          Welcome to Team 1 Hotel
-        </h1>
+        <h1 className="text-4xl font-bold md:text-5xl">Welcome to Our Hotel</h1>
         <p className="mx-auto mt-4 max-w-xl text-lg text-blue-100">
           Comfortable rooms, fair prices and simple online booking. Find the
           right room for your stay today.
