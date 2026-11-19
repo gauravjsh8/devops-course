@@ -11,7 +11,7 @@ describe("HomePage", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Welcome to Our Hotel")).toBeInTheDocument();
+    expect(screen.getByText("Welcome to Team 1 Hotel")).toBeInTheDocument();
     expect(screen.getByText("Find a room")).toHaveAttribute("href", "/rooms");
     expect(screen.getByText("Create an account")).toHaveAttribute(
       "href",
