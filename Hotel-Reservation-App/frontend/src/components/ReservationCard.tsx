@@ -47,7 +47,9 @@ function ReservationCard({
     try {
       await onSave({ checkIn, checkOut, guestCount });
       setEditing(false);
-    } catch {}
+    } catch {
+      setEditing(true);
+    }
   }
 
   return (
