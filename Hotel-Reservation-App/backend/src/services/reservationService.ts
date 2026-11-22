@@ -16,11 +16,15 @@ export class ReservationError extends Error {
 export interface CurrentUser {
   id: string;
   role: string;
+  name: string;
+  email: string;
 }
 
 export interface ReservationInput {
   roomId?: string;
   customerId?: string;
+  guestName?: string;
+  guestEmail?: string;
   checkIn?: string;
   checkOut?: string;
   guestCount?: number;
@@ -76,7 +80,9 @@ async function findReservationForUser(id: string, user: CurrentUser) {
     throw new ReservationError("Reservation not found", 404);
   }
 
-  const isOwner = reservation.customer.toString() === user.id;
+  const isOwner =
+    reservation.customer !== undefined &&
+    reservation.customer.toString() === user.id;
   if (user.role === "customer" && !isOwner) {
     throw new ReservationError("Reservation not found", 404);
   }
@@ -128,7 +134,7 @@ export async function searchAvailableRooms(
 // ---------- customer ----------
 
 export async function createReservation(
-  user: CurrentUser,
+  user: CurrentUser | undefined,
   data: ReservationInput,
 ) {
   if (
@@ -155,8 +161,13 @@ export async function createReservation(
     throw new ReservationError("Invalid room ID", 400);
   }
 
-  let customerId = user.id;
-  if (user.role === "receptionist") {
+  let customerId: string | undefined;
+  let guestName: string | undefined;
+  let guestEmail: string | undefined;
+
+  if (user?.role === "customer") {
+    customerId = user.id;
+  } else if (user?.role === "receptionist") {
     if (!data.customerId || !mongoose.isValidObjectId(data.customerId)) {
       throw new ReservationError("A valid customerId is required", 400);
     }
@@ -168,6 +179,26 @@ export async function createReservation(
       throw new ReservationError("Customer not found", 404);
     }
     customerId = customer.id;
+  } else if (user?.role === "administrator") {
+    throw new ReservationError(
+      "Administrators cannot create customer reservations",
+      403,
+    );
+  } else {
+    if (
+      typeof data.guestName !== "string" ||
+      !data.guestName.trim()
+    ) {
+      throw new ReservationError("Guest name is required", 400);
+    }
+    if (
+      typeof data.guestEmail !== "string" ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.guestEmail.trim())
+    ) {
+      throw new ReservationError("A valid guest email is required", 400);
+    }
+    guestName = data.guestName.trim();
+    guestEmail = data.guestEmail.trim().toLowerCase();
   }
 
   return mongoose.connection.transaction(async (session) => {
@@ -208,7 +239,9 @@ export async function createReservation(
     const [reservation] = await Reservation.create(
       [
         {
-          customer: customerId,
+          ...(customerId ? { customer: customerId } : {}),
+          ...(guestName ? { guestName } : {}),
+          ...(guestEmail ? { guestEmail } : {}),
           room: room.id,
           checkIn,
           checkOut,

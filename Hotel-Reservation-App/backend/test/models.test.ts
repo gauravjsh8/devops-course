@@ -98,6 +98,7 @@ test("ReservationModel saves and loads a valid reservation", async () => {
 
   const loadedReservation = await Reservation.findById(reservation._id);
   assert.ok(loadedReservation);
+  assert.ok(loadedReservation.customer);
   assert.equal(loadedReservation.customer.toString(), user._id.toString());
   assert.equal(loadedReservation.room.toString(), room._id.toString());
   assert.equal(loadedReservation.status, "confirmed");
