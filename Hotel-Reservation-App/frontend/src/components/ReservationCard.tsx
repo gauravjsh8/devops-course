@@ -33,6 +33,7 @@ function ReservationCard({
   const [checkIn, setCheckIn] = useState(reservation.checkIn.slice(0, 10));
   const [checkOut, setCheckOut] = useState(reservation.checkOut.slice(0, 10));
   const [guestCount, setGuestCount] = useState(reservation.guestCount);
+  const [editError, setEditError] = useState("");
 
   const nights = Math.round(
     (new Date(reservation.checkOut).getTime() -
@@ -44,6 +45,19 @@ function ReservationCard({
   const canChange = !isCancelled && reservation.checkIn.slice(0, 10) > today;
 
   async function handleSave() {
+    setEditError("");
+    if (!checkIn || !checkOut) {
+      setEditError("Check-in and check-out are required");
+      return;
+    }
+    if (new Date(checkOut) <= new Date(checkIn)) {
+      setEditError("Check-out must be after check-in");
+      return;
+    }
+    if (!Number.isInteger(guestCount) || guestCount < 1) {
+      setEditError("Guests must be a positive whole number");
+      return;
+    }
     try {
       await onSave({ checkIn, checkOut, guestCount });
       setEditing(false);
@@ -147,6 +161,11 @@ function ReservationCard({
             />
           </div>
         </div>
+      )}
+      {editing && editError && (
+        <p className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+          {editError}
+        </p>
       )}
 
       {canChange && (

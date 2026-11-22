@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
 import { api, authHeader, getErrorMessage } from "../api";
 import RoomCard from "../components/RoomCard";
 import type { Room, User } from "../types";
+import BookingReview from "../features/reservations/BookingReview";
+import ReservationConfirmation from "../features/reservations/ReservationConfirmation";
+import RoomDetails from "../features/rooms/RoomDetails";
 
 interface Props {
   user: User | null;
@@ -17,7 +19,15 @@ function RoomsPage({ user }: Props) {
   const [guests, setGuests] = useState(1);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
+  const [reviewRoom, setReviewRoom] = useState<Room | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [confirmation, setConfirmation] = useState<{
+    reservationNumber: string;
+    status: string;
+    email: string;
+    emailSent: boolean;
+  } | null>(null);
+  const [detailsRoom, setDetailsRoom] = useState<Room | null>(null);
 
   useEffect(() => {
     api
@@ -42,39 +52,41 @@ function RoomsPage({ user }: Props) {
   }
 
   async function handleBook(room: Room) {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
+    setReviewRoom(room);
+  }
 
-    const confirmed = window.confirm(
-      `Please confirm your booking:\n\n` +
-        `Room ${room.roomNumber} (${room.roomType})\n` +
-        `Check-in: ${checkIn}\n` +
-        `Check-out: ${checkOut}\n` +
-        `Guests: ${guests}\n` +
-        `Total price: ${room.totalPrice} €`,
-    );
-    if (!confirmed) {
-      return;
-    }
-
+  async function submitBooking(guestName: string, guestEmail: string) {
+    if (!reviewRoom) return;
+    setSubmitting(true);
+    setError("");
     try {
       const response = await api.post(
         "/reservations",
-        { roomId: room._id, checkIn, checkOut, guestCount: guests },
+        {
+          roomId: reviewRoom._id,
+          checkIn,
+          checkOut,
+          guestCount: guests,
+          guestName: user ? undefined : guestName,
+          guestEmail: user ? undefined : guestEmail,
+        },
         authHeader(),
       );
-      alert(
-        `Booking confirmed!\nReservation number: ${response.data.reservation.reservationNumber}`,
-      );
-      navigate("/my-reservations");
+      setReviewRoom(null);
+      setConfirmation({
+        reservationNumber: response.data.reservation.reservationNumber,
+        status: response.data.reservation.status,
+        email: user?.email ?? guestEmail,
+        emailSent: Boolean(response.data.emailSent),
+      });
     } catch (error) {
       setError(getErrorMessage(error));
+    } finally {
+      setSubmitting(false);
     }
   }
-
-  const canBook = searched && (!user || user.role === "customer");
+  const canBook =
+    searched && (!user || user.role === "customer");
 
   return (
     <div className="space-y-8">
@@ -162,12 +174,44 @@ function RoomsPage({ user }: Props) {
               <RoomCard
                 key={room._id}
                 room={room}
+                onViewDetails={() => setDetailsRoom(room)}
                 onBook={canBook ? () => void handleBook(room) : undefined}
               />
             ))}
           </div>
         )}
       </div>
+
+      {reviewRoom && (
+        <BookingReview
+          room={reviewRoom}
+          user={user}
+          checkIn={checkIn}
+          checkOut={checkOut}
+          guests={guests}
+          submitting={submitting}
+          error={error}
+          onSubmit={(guestName, guestEmail) =>
+            void submitBooking(guestName, guestEmail)
+          }
+          onClose={() => {
+            setReviewRoom(null);
+            setError("");
+          }}
+        />
+      )}
+      {confirmation && (
+        <ReservationConfirmation
+          {...confirmation}
+          onClose={() => setConfirmation(null)}
+        />
+      )}
+      {detailsRoom && (
+        <RoomDetails
+          room={detailsRoom}
+          onClose={() => setDetailsRoom(null)}
+        />
+      )}
     </div>
   );
 }

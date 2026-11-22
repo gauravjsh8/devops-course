@@ -32,7 +32,7 @@ function LoginPage({ onLogin }: Props) {
       } else if (user.role === "receptionist") {
         navigate("/reservations");
       } else {
-        navigate("/rooms");
+        navigate("/");
       }
     } catch (error) {
       setError(getErrorMessage(error));

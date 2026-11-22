@@ -118,6 +118,9 @@ describe("RoomsPage", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Book this room" }),
     );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Confirm booking" }),
+    );
 
     expect(mockPost).toHaveBeenCalledWith(
       "/reservations",
@@ -126,6 +129,8 @@ describe("RoomsPage", () => {
         checkIn: "2030-01-10",
         checkOut: "2030-01-12",
         guestCount: 1,
+        guestName: undefined,
+        guestEmail: undefined,
       },
       {},
     );

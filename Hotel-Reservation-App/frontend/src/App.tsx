@@ -48,7 +48,7 @@ function App() {
       <main className="mx-auto max-w-5xl p-6">
         <Routes>
           {/* Everyone */}
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={<HomePage user={user} />} />
           <Route path="/rooms" element={<RoomsPage user={user} />} />
           <Route path="/login" element={<LoginPage onLogin={setUser} />} />
           <Route path="/register" element={<RegisterPage />} />

@@ -1,11 +1,11 @@
 import type { Room } from "../types";
-
 interface Props {
   room: Room;
   onBook?: () => void;
+  onViewDetails?: () => void;
 }
 
-function RoomCard({ room, onBook }: Props) {
+function RoomCard({ room, onBook, onViewDetails }: Props) {
   return (
     <div className="flex flex-col rounded-2xl bg-white p-6 shadow">
       {room.photos.length > 0 && (
@@ -45,6 +45,16 @@ function RoomCard({ room, onBook }: Props) {
             </span>
           ))}
         </div>
+      )}
+
+      {onViewDetails && (
+        <button
+          type="button"
+          onClick={onViewDetails}
+          className="mt-4 self-start text-sm font-semibold text-blue-700 hover:underline"
+        >
+          View details
+        </button>
       )}
 
       {room.totalPrice !== undefined && (

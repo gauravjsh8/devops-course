@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import type { User } from "../types";
 
 const roomTypes = [
   {
@@ -49,28 +50,39 @@ const steps = [
   },
 ];
 
-function HomePage() {
+interface Props {
+  user: User | null;
+}
+
+function HomePage({ user }: Props) {
   return (
     <div className="space-y-12">
       <section className="rounded-2xl bg-gradient-to-br from-blue-700 to-blue-500 px-8 py-16 text-center text-white shadow-lg">
+        {user && (
+          <p className="mb-3 text-lg font-semibold text-blue-100">
+            Hello {user.name}
+          </p>
+        )}
         <h1 className="text-4xl font-bold md:text-5xl">Welcome to Our Hotel</h1>
         <p className="mx-auto mt-4 max-w-xl text-lg text-blue-100">
           Comfortable rooms, fair prices and simple online booking. Find the
           right room for your stay today.
         </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-4">
+        <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
             to="/rooms"
-            className="rounded-lg bg-white px-6 py-3 font-semibold text-blue-700 hover:bg-blue-50"
+            className="w-full max-w-xs rounded-lg bg-white px-6 py-3 text-center font-semibold text-blue-700 hover:bg-blue-50 sm:w-auto"
           >
             Find a room
           </Link>
-          <Link
-            to="/register"
-            className="rounded-lg border border-white px-6 py-3 font-semibold text-white hover:bg-blue-600"
-          >
-            Create an account
-          </Link>
+          {!user && (
+            <Link
+              to="/register"
+              className="w-full max-w-xs rounded-lg border border-white px-6 py-3 text-center font-semibold text-white hover:bg-blue-600 sm:w-auto"
+            >
+              Create an account
+            </Link>
+          )}
         </div>
       </section>
 

@@ -7,7 +7,7 @@ describe("HomePage", () => {
   it("shows the welcome title and the main buttons", () => {
     render(
       <MemoryRouter>
-        <HomePage />
+        <HomePage user={null} />
       </MemoryRouter>,
     );
 
@@ -17,5 +17,23 @@ describe("HomePage", () => {
       "href",
       "/register",
     );
+  });
+
+  it("greets a logged-in customer and does not show account registration", () => {
+    render(
+      <MemoryRouter>
+        <HomePage
+          user={{
+            id: "1",
+            name: "Gaurav",
+            email: "gaurav@example.com",
+            role: "customer",
+          }}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Hello Gaurav")).toBeInTheDocument();
+    expect(screen.queryByText("Create an account")).not.toBeInTheDocument();
   });
 });

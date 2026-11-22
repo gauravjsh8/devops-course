@@ -31,7 +31,7 @@ function MyReservationPage() {
     try {
       await api.put(`/reservations/${reservation._id}`, changes, authHeader());
       setMessage("Your booking was updated.");
-      setReloadKey(reloadKey + 1);
+      setReloadKey((current) => current + 1);
     } catch (error) {
       setError(getErrorMessage(error));
       throw error;
@@ -55,7 +55,7 @@ function MyReservationPage() {
         authHeader(),
       );
       setMessage("Your booking was cancelled.");
-      setReloadKey(reloadKey + 1);
+      setReloadKey((current) => current + 1);
     } catch (error) {
       setError(getErrorMessage(error));
     }
