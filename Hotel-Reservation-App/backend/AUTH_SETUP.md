@@ -19,23 +19,39 @@ Room creation, updates, and archival require an authenticated `receptionist` or
 `DELETE /api/rooms/:id`; records are retained in the database with
 `isActive: false`.
 
-## Create the initial staff account
+## Create or update staff accounts
 
-There is deliberately no public staff-registration endpoint. Start MongoDB and
-the configured database, then from `backend/` enter the staff details into the
-current terminal session and run the one-time setup script:
+There is deliberately no public staff-registration endpoint. Create staff
+accounts using one of the provided scripts:
+
+- macOS/Linux administrator: `backend/scripts/createAdmin.sh`
+- macOS/Linux receptionist: `backend/scripts/createReceptionist.sh`
+- Windows administrator: `backend/scripts/createAdmin.bat`
+- Windows receptionist: `backend/scripts/createReceptionist.bat`
+
+On macOS/Linux, make the script executable once if needed:
 
 ```sh
-export STAFF_NAME="Hotel Administrator"
-export STAFF_EMAIL="admin@example.com"
-export STAFF_ROLE="administrator"
-read -s STAFF_PASSWORD
-export STAFF_PASSWORD
-npx tsx scripts/createStaffUser.ts
-unset STAFF_PASSWORD STAFF_NAME STAFF_EMAIL STAFF_ROLE
+chmod +x backend/scripts/createAdmin.sh
+chmod +x backend/scripts/createReceptionist.sh
 ```
 
-Enter a password of at least 8 characters when prompted. Use
-`STAFF_ROLE=receptionist` to create a receptionist instead. The script uses the
-normal user model, so the password is hashed before it is stored. Do not place
-staff credentials in a committed file.
+Edit `STAFF_NAME`, `STAFF_EMAIL`, and `STAFF_PASSWORD` near the top of the
+selected script. The password must contain at least 8 characters. The scripts
+automatically use the `MONGO_URI` configured in `backend/.env`, so ensure that
+URI matches the database used by the backend server.
+
+Run the script from any directory:
+
+```sh
+backend/scripts/createAdmin.sh
+```
+
+On Windows, run the corresponding `.bat` file.
+
+Running a script again with the same `STAFF_EMAIL` updates that existing staff
+account's name, password, and role. It does not create another account.
+Changing `STAFF_EMAIL` identifies a new account and will create it. The script
+uses the normal user model, so passwords are hashed before storage.
+
+Do not commit real staff credentials or the `backend/.env` file.

@@ -14,8 +14,8 @@ async function createStaffUser(): Promise<void> {
   if (!STAFF_NAME?.trim() || !STAFF_EMAIL?.trim()) {
     throw new Error("STAFF_NAME and STAFF_EMAIL are required");
   }
-  if (!STAFF_PASSWORD || STAFF_PASSWORD.length < 5) {
-    throw new Error("STAFF_PASSWORD must be at least 5 characters long");
+  if (!STAFF_PASSWORD || STAFF_PASSWORD.length < 8) {
+    throw new Error("STAFF_PASSWORD must be at least 8 characters long");
   }
   if (STAFF_ROLE !== "receptionist" && STAFF_ROLE !== "administrator") {
     throw new Error("STAFF_ROLE must be receptionist or administrator");
@@ -28,7 +28,12 @@ async function createStaffUser(): Promise<void> {
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      throw new Error(`An account already exists for ${email}`);
+      existingUser.name = STAFF_NAME.trim();
+      existingUser.passwordHash = STAFF_PASSWORD;
+      existingUser.role = role;
+      await existingUser.save();
+      console.log(`Updated ${role} account for ${email}`);
+      return;
     }
 
     const user = await User.create({

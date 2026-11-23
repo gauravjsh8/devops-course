@@ -2,7 +2,9 @@ import { randomUUID } from "node:crypto";
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IReservation extends Document {
-  customer: mongoose.Types.ObjectId;
+  customer?: mongoose.Types.ObjectId;
+  guestName?: string;
+  guestEmail?: string;
   room: mongoose.Types.ObjectId;
   checkIn: Date;
   checkOut: Date;
@@ -19,8 +21,10 @@ const reservationSchema = new Schema<IReservation>(
     customer: {
       type: Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: false,
     },
+    guestName: { type: String, trim: true },
+    guestEmail: { type: String, trim: true, lowercase: true },
 
     room: {
       type: Schema.Types.ObjectId,

@@ -5,6 +5,8 @@ import {
   ReservationError,
   type CurrentUser,
 } from "../services/reservationService";
+import { sendReservationConfirmation } from "../services/emailService";
+import Room from "../models/room";
 
 function getUser(res: Response): CurrentUser {
   return res.locals.authUser as CurrentUser;
@@ -43,11 +45,37 @@ export async function searchAvailableRooms(req: Request, res: Response) {
 // POST /api/reservations
 export async function createReservation(req: Request, res: Response) {
   try {
+    const user = res.locals.authUser as CurrentUser | undefined;
     const reservation = await reservationService.createReservation(
-      getUser(res),
+      user,
       req.body ?? {},
     );
-    res.status(201).json({ message: "Reservation created", reservation });
+    const recipientEmail = reservation.guestEmail ?? user?.email;
+    const recipientName = reservation.guestName ?? user?.name ?? "Guest";
+    const room = await Room.findById(reservation.room);
+
+    let emailSent = false;
+    if (recipientEmail && room) {
+      try {
+        emailSent = await sendReservationConfirmation({
+          email: recipientEmail,
+          name: recipientName,
+          reservationNumber: reservation.reservationNumber,
+          roomNumber: room.roomNumber,
+          checkIn: reservation.checkIn,
+          checkOut: reservation.checkOut,
+          totalPrice: reservation.totalPrice,
+        });
+      } catch (error) {
+        console.error("Reservation confirmation email failed:", error);
+      }
+    }
+
+    res.status(201).json({
+      message: "Reservation created",
+      reservation,
+      emailSent,
+    });
   } catch (error) {
     handleError(error, res);
   }

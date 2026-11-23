@@ -186,6 +186,37 @@ export const requireAuth: RequestHandler = async (
   }
 };
 
+export const optionalAuth: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const authorization = req.header("authorization");
+  const match = authorization?.match(/^Bearer\s+(.+)$/i);
+  if (!match) {
+    next();
+    return;
+  }
+
+  const secret = getJwtSecret();
+  try {
+    const payload = jwt.verify(match[1], secret);
+    if (
+      typeof payload === "object" &&
+      typeof payload.sub === "string" &&
+      typeof payload.tokenVersion === "number"
+    ) {
+      const user = await User.findById(payload.sub).select("+authTokenVersion");
+      if (user && user.authTokenVersion === payload.tokenVersion) {
+        res.locals.authUser = user;
+      }
+    }
+  } catch {
+    // Public bookings remain available when an optional token is invalid.
+  }
+  next();
+};
+
 export function requireRole(...roles: UserRole[]): RequestHandler {
   return (_req, res, next) => {
     const user = res.locals.authUser as { role?: UserRole } | undefined;
