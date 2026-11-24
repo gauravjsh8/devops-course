@@ -7,8 +7,10 @@ RUN npm ci
 
 COPY tsconfig.json ./
 COPY src ./src
+COPY scripts ./scripts
 RUN npm run build
 RUN npx tsup src/server.ts --format esm --platform node --out-dir /app/bundle
+RUN npx tsup scripts/createStaffUser.ts --format esm --platform node --out-dir /app/staff-bundle
 
 FROM node:22-alpine AS runtime
 
@@ -19,6 +21,9 @@ COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY --from=build /app/bundle/server.js ./dist/server.js
+COPY --from=build /app/staff-bundle/createStaffUser.js ./dist/createStaffUser.js
+
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
 
 USER node
 
